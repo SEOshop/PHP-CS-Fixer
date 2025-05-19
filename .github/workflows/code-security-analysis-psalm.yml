@@ -1,0 +1,31 @@
+name: Static Code Security Analysis (Psalm)
+
+on:
+  push:
+    branches: [ "1.12" ]
+  pull_request:
+    branches: [ "1.12" ]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 7.4
+          extensions: dom, curl, libxml, mbstring, zip
+          tools: composer:v2
+          coverage: xdebug2
+      - name: Psalm
+        run: |
+          wget https://github.com/vimeo/psalm/releases/download/5.26.1/psalm.phar -O psalm.phar
+          chmod +x psalm.phar
+          composer install
+          ./psalm.phar --output-format=github --taint-analysis --report=results.sarif
+      - name: Upload Security Analysis results to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
